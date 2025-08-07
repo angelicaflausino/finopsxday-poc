@@ -1,0 +1,14 @@
+- hosts: localhost
+  name: Run Downgrade and Upgrade Infra
+  connection: local
+  collections:
+    - azure.azcollection
+  tasks:
+    - name: App Service Plan - app-finopsx-lab
+      include_role:
+        name: app-service-plan
+      vars:
+        plan_name: app-finopsx-lab
+        sku_upgrade: B2
+        sku_downgrade: B1
+        location: eastus2

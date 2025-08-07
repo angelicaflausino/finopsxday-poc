@@ -1,0 +1,39 @@
+# Downgrade Tasks
+- name: '[Downgrade] Execute App Service Plan'
+  azure_rm_appserviceplan:
+    resource_group: "{{ resource_group }}"
+    name: "{{ plan_name }}"
+    sku: "{{ sku_downgrade }}"
+    location: "{{ location }}"
+  when: downgrade | bool
+
+- name: '[Downgrade] Get status after update'
+  azure_rm_appserviceplan_info:
+    resource_group: "{{ resource_group }}"
+    name: "{{ plan_name }}"
+  register: facts
+  when: downgrade | bool
+
+- debug:
+    var: facts.appserviceplans[0].sku
+  when: downgrade | bool
+
+# Upgrade Tasks
+- name: '[Upgrade] Execute App Service Plan'
+  azure_rm_appserviceplan:
+    resource_group: "{{ resource_group }}"
+    name: "{{ plan_name }}"
+    sku: "{{ sku_upgrade }}"
+    location: "{{ location }}"
+  when: not downgrade | bool
+
+- name: '[Upgrade] Get status after update'
+  azure_rm_appserviceplan_info:
+    resource_group: "{{ resource_group }}"
+    name: "{{ plan_name }}"
+  register: facts
+  when: not downgrade | bool
+
+- debug:
+    var: facts.appserviceplans[0].sku
+  when: not downgrade | bool

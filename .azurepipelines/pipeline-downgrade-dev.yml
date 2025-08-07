@@ -1,0 +1,41 @@
+trigger:
+  - none
+
+# Agent must be Linux
+pool: 
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: RESOURCE_GROUP
+    value: 'Put here your resource group name'
+
+steps:
+  - checkout: self
+  - script: |
+      sudo apt install python3-pip -y
+      pip install ansible
+      ansible-galaxy collection install azure.azcollection --force
+      pip install -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements.txt
+    displayName: 'Install Ansible and dependencies'
+  
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'Put here your service connection name'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        [ -f "$AZURE_CONFIG_DIR/msal_http_cache.bin" ] && rm -f "$AZURE_CONFIG_DIR/msal_http_cache.bin"
+
+        ansible-playbook \
+          -e downgrade=true \
+          -e resource_group=$RESOURCE_GROUP \
+          "$(Agent.BuildDirectory)/s/ansible/playbook_dev.yml"
+    displayName: 'Run Ansible Downgrade Infra'
+  
+schedules:
+  - cron: '0 21 * * Mon-Fri' #Read the README.md to learn more about cron notation.
+    displayName: 'Downgrade schedule'
+    branches:
+      include:
+        - main
+    always: true
